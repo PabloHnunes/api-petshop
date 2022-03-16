@@ -1,9 +1,9 @@
-const Modelo = require('./ModeloTabelaFornecedor');    
-
+const Modelo = require('./ModeloTabelaFornecedor');
+const NaoEncontrado = require('../../erros/NaoEncontrado');    
 
 module.exports = {
     listar() {
-        return Modelo.findAll();
+        return Modelo.findAll({ raw: true });
     },
     inserir( fornecedor ) {
         return Modelo.create(fornecedor);
@@ -15,7 +15,7 @@ module.exports = {
         } });
         
         if (!encontrado){
-            throw new Error('ATENÇÃO! Fornecedor Não encontrado.');
+            throw new NaoEncontrado();
         }
 
         return encontrado;

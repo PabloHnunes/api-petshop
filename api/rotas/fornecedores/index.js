@@ -1,56 +1,57 @@
 const roteador = require('express').Router();
 const TabelaFornecedor = require('./TabelaFornecedor');
 const Fornecedor = require('./Fornecedor');
+const SerializadorFornecedor = require('../../Serializador').SerializadorFornecedor;
 
 roteador.get('/', async (requisicao, resposta) => {
     const resultados = await TabelaFornecedor.listar();
     resposta.status(200);
-    resposta.send(
-        JSON.stringify(resultados)
+    const serializador = new SerializadorFornecedor(
+        resposta.getHeader('Content-Type')
     );
-})
+    resposta.send(
+        serializador.serializar(resultados)
+    );
+});
 
-roteador.post('/', async (requisicao, resposta) => {
+roteador.post('/', async (requisicao, resposta, tratamento) => {
     try{
         const dadosRecebidos = requisicao.body;
         const fornecedor = new Fornecedor(dadosRecebidos);
         await fornecedor.criar();
         resposta.status(201);
+        const serializador = new SerializadorFornecedor(
+            resposta.getHeader('Content-Type')
+        );
         resposta.send(
-            JSON.stringify(fornecedor)
+            serializador.serializar(fornecedor)
         );
     }
     catch(erro){
-        resposta.status(400);
-        resposta.send(
-            JSON.stringify({
-                mensagem: erro.message
-            })
-        );
+        tratamento(erro);
     }
-})
+});
 
-roteador.get('/:id', async (requisicao, resposta) => {
+roteador.get('/:id', async (requisicao, resposta, tratamento) => {
     try{
         const id = requisicao.params.id;
         const fornecedor = new Fornecedor({id: id});
         await fornecedor.carregar();
         resposta.status(200);
+        const serializador = new SerializadorFornecedor(
+            resposta.getHeader('Content-Type'),
+            ['email', 'dataCriacao', 'dataAtualizacao', 'versao']
+        );
         resposta.send(
-            JSON.stringify(fornecedor)
+            serializador.serializar(fornecedor)
         );
     }
     catch (erro) {
-        resposta.status(404);
-        resposta.send(
-            JSON.stringify({
-                mensagem: erro.message
-            })
-        );
+        tratamento(erro);
     }
-})
+});
 
-roteador.put('/:id', async (requisicao, resposta) => {
+roteador.put('/:id', async (requisicao, resposta, tratamento) => {
     try{
         const id = requisicao.params.id;
         const dadosRecebidos = requisicao.body;
@@ -62,16 +63,11 @@ roteador.put('/:id', async (requisicao, resposta) => {
         resposta.end();
     }
     catch(erro){
-        resposta.status(400);
-        resposta.send(
-            JSON.stringify({
-                mensagem: erro.message
-            })
-        );
+        tratamento(erro);
     }
-})
+});
 
-roteador.delete('/:id', async (requisicao, resposta) => {
+roteador.delete('/:id', async (requisicao, resposta, tratamento) => {
     try{
         const id = requisicao.params.id;
         const fornecedor = new Fornecedor({ id: id });
@@ -82,13 +78,8 @@ roteador.delete('/:id', async (requisicao, resposta) => {
         resposta.end();
     }
     catch(erro){
-        resposta.status(400);
-        resposta.send(
-            JSON.stringify({
-                mensagem: erro.message
-            })
-        );
+        tratamento(erro);
     }
-})
+});
 
-module.exports = roteador
+module.exports = roteador;
